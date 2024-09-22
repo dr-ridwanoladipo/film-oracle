@@ -99,21 +99,28 @@ def load_recommender():
 def main():
     recommender = load_recommender()
 
-    st.title('🎬 Movie Recommendation System')
-
     if 'page' not in st.session_state:
         st.session_state.page = "Home"
     if 'genre' not in st.session_state:
         st.session_state.genre = None
+    if 'trigger_popular_movies' not in st.session_state:
+        st.session_state.trigger_popular_movies = False
+
+    st.title('🎬 Movie Recommendation System')
 
     pages = ["Home", "Popular Movies", "Content-based Recommendations", "Collaborative Filtering"]
     st.sidebar.title("Navigation")
-    page = st.sidebar.radio("Go to", pages, index=pages.index(st.session_state.page))
+    selected_page = st.sidebar.radio("Go to", pages, index=pages.index(st.session_state.page))
 
-    if page != st.session_state.page:
-        st.session_state.page = page
-        if page != "Popular Movies":
+    if selected_page != st.session_state.page:
+        st.session_state.page = selected_page
+        if selected_page != "Popular Movies":
             st.session_state.genre = None
+            st.session_state.trigger_popular_movies = False
+
+    if st.session_state.trigger_popular_movies:
+        st.session_state.page = "Popular Movies"
+        st.session_state.trigger_popular_movies = False
 
     if st.session_state.page == "Home":
         show_home_page(recommender)
@@ -131,9 +138,9 @@ def show_home_page(recommender):
 
     cols = st.columns(5)
     for i, genre in enumerate(recommender.genres):
-        if cols[i % 5].button(genre):
+        if cols[i % 5].button(genre, key=f"genre_{genre}"):
             st.session_state.genre = genre
-            st.session_state.page = "Popular Movies"
+            st.session_state.trigger_popular_movies = True
             st.rerun()
 
 
@@ -142,10 +149,15 @@ def show_popular_movies(recommender):
 
     genre = st.selectbox('Select a genre', ['All'] + recommender.genres,
                          index=0 if st.session_state.genre is None else recommender.genres.index(
-                             st.session_state.genre) + 1)
-    n_movies = st.number_input('Number of movies to show', min_value=1, max_value=20, value=5)
+                             st.session_state.genre) + 1,
+                         key="genre_selectbox")
 
-    popular_movies = recommender.popularity_based_recommendations(n_movies, genre)
+    if genre != st.session_state.genre:
+        st.session_state.genre = genre
+
+    n_movies = st.number_input('Number of movies to show', min_value=1, max_value=20, value=10)
+
+    popular_movies = recommender.popularity_based_recommendations(n_movies, genre if genre != 'All' else None)
 
     for _, movie in popular_movies.iterrows():
         with st.container():
@@ -158,7 +170,6 @@ def show_popular_movies(recommender):
                 st.write(f"**Year:** {movie['year']}")
                 st.write(f"**Genres:** {', '.join([g['name'] for g in movie['genres']])}")
                 st.write(f"**Rating:** {movie['weighted_rating']:.2f}")
-                st.markdown("<br>", unsafe_allow_html=True)
 
 
 def show_content_based(recommender):
