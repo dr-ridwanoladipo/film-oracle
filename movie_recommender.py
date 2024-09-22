@@ -141,6 +141,18 @@ st.markdown("""
         background-color: #7B1FA2;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
+        .footer {
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        background-color: white;
+        color: #2c3e50;
+        text-align: center;
+        padding: 10px 0;
+        font-weight: bold;
+    }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -191,6 +203,15 @@ def main():
         show_content_based(recommender)
     elif st.session_state.page == "Collaborative Filtering":
         show_collaborative_filtering(recommender)
+
+    st.markdown(
+        """
+        <div class="footer">
+        © 2024 All Rights Reserved | Dr. Ridwan Oladipo
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 
 def show_home_page(recommender):
