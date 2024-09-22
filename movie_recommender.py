@@ -64,28 +64,53 @@ class MovieRecommender:
             ['title', 'year', 'genres', 'overview']]
 
 
-# Streamlit App
 st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wide")
 
+# Custom CSS for better styling
 st.markdown("""
 <style>
     .stApp {
-        background-color: #0e1117;
-        color: #ffffff;
+        background-color: #1e1e2e;
+        color: #cdd6f4;
     }
     .stButton>button {
-        color: #ffffff;
-        background-color: #ff4b4b;
+        color: #1e1e2e;
+        background-color: #f5c2e7;
         border-radius: 5px;
+        font-weight: bold;
     }
     .stSelectbox {
-        color: #ffffff;
+        color: #cdd6f4;
     }
     .movie-container {
-        background-color: #1e2130;
+        background-color: #313244;
         padding: 20px;
-        border-radius: 5px;
+        border-radius: 10px;
         margin-bottom: 10px;
+        border: 1px solid #f5c2e7;
+    }
+    .st-expander {
+        background-color: #313244;
+        border-radius: 10px;
+        border: 1px solid #f5c2e7;
+    }
+    .st-expander .st-expander-content {
+        background-color: #313244;
+    }
+    h1, h2, h3 {
+        color: #f5c2e7;
+    }
+    .stTextInput>div>div>input {
+        color: #cdd6f4;
+    }
+    .hamburger {
+        font-size: 24px;
+        cursor: pointer;
+        background-color: #f5c2e7;
+        color: #1e1e2e;
+        padding: 5px 10px;
+        border-radius: 5px;
+        display: inline-block;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -106,17 +131,18 @@ def main():
     if 'trigger_popular_movies' not in st.session_state:
         st.session_state.trigger_popular_movies = False
 
+    # Hamburger menu
+    with st.expander("☰ Menu"):
+        pages = ["Home", "Popular Movies", "Content-based Recommendations", "Collaborative Filtering"]
+        for page in pages:
+            if st.button(page, key=f"nav_{page}"):
+                st.session_state.page = page
+                if page != "Popular Movies":
+                    st.session_state.genre = None
+                    st.session_state.trigger_popular_movies = False
+                st.rerun()
+
     st.title('🎬 Movie Recommendation System')
-
-    pages = ["Home", "Popular Movies", "Content-based Recommendations", "Collaborative Filtering"]
-    st.sidebar.title("Navigation")
-    selected_page = st.sidebar.radio("Go to", pages, index=pages.index(st.session_state.page))
-
-    if selected_page != st.session_state.page:
-        st.session_state.page = selected_page
-        if selected_page != "Popular Movies":
-            st.session_state.genre = None
-            st.session_state.trigger_popular_movies = False
 
     if st.session_state.trigger_popular_movies:
         st.session_state.page = "Popular Movies"
