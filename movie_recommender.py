@@ -64,53 +64,82 @@ class MovieRecommender:
             ['title', 'year', 'genres', 'overview']]
 
 
+# Streamlit App
 st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wide")
 
 # Custom CSS for better styling
 st.markdown("""
 <style>
     .stApp {
-        background-color: #1e1e2e;
-        color: #cdd6f4;
+        background: linear-gradient(45deg, #FF512F, #DD2476, #FF512F);
+        background-size: 200% 200%;
+        animation: gradient 15s ease infinite;
+        color: #ffffff;
+    }
+    @keyframes gradient {
+        0% {background-position: 0% 50%;}
+        50% {background-position: 100% 50%;}
+        100% {background-position: 0% 50%;}
     }
     .stButton>button {
-        color: #1e1e2e;
-        background-color: #f5c2e7;
+        color: #ffffff;
+        background-color: #4A148C;
         border-radius: 5px;
         font-weight: bold;
+        border: none;
+        padding: 0.5rem 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        transition: all 0.3s ease;
     }
-    .stSelectbox {
-        color: #cdd6f4;
+    .stButton>button:hover {
+        background-color: #7B1FA2;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .stSelectbox>div>div {
+        background-color: rgba(255,255,255,0.2);
+        color: #ffffff;
+        border-radius: 5px;
     }
     .movie-container {
-        background-color: #313244;
+        background-color: rgba(0,0,0,0.5);
         padding: 20px;
         border-radius: 10px;
-        margin-bottom: 10px;
-        border: 1px solid #f5c2e7;
+        margin-bottom: 20px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
     }
     .st-expander {
-        background-color: #313244;
+        background-color: rgba(0,0,0,0.5);
         border-radius: 10px;
-        border: 1px solid #f5c2e7;
+        border: 1px solid rgba(255,255,255,0.2);
+        backdrop-filter: blur(10px);
     }
     .st-expander .st-expander-content {
-        background-color: #313244;
+        background-color: transparent;
     }
     h1, h2, h3 {
-        color: #f5c2e7;
+        color: #FFD700;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
     }
     .stTextInput>div>div>input {
-        color: #cdd6f4;
+        color: #ffffff;
+        background-color: rgba(255,255,255,0.2);
+        border-radius: 5px;
     }
     .hamburger {
         font-size: 24px;
         cursor: pointer;
-        background-color: #f5c2e7;
-        color: #1e1e2e;
+        background-color: #4A148C;
+        color: #ffffff;
         padding: 5px 10px;
         border-radius: 5px;
         display: inline-block;
+        transition: all 0.3s ease;
+    }
+    .hamburger:hover {
+        background-color: #7B1FA2;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -170,6 +199,18 @@ def show_home_page(recommender):
             st.rerun()
 
 
+def display_movie(movie):
+    with st.container():
+        st.subheader(movie['title'])
+        st.write(f"**Year:** {movie['year']}")
+        st.write(f"**Genres:** {', '.join([g['name'] for g in movie['genres']])}")
+        if 'weighted_rating' in movie:
+            st.write(f"**Rating:** {movie['weighted_rating']:.2f}")
+        if 'overview' in movie:
+            st.write(f"**Overview:** {movie['overview'][:200]}...")
+    st.write("")  # Add some space between movies
+
+
 def show_popular_movies(recommender):
     st.header('Popular Movies')
 
@@ -186,16 +227,7 @@ def show_popular_movies(recommender):
     popular_movies = recommender.popularity_based_recommendations(n_movies, genre if genre != 'All' else None)
 
     for _, movie in popular_movies.iterrows():
-        with st.container():
-            col1, col2 = st.columns([1, 3])
-            with col1:
-                st.image(f"https://via.placeholder.com/150x225.png?text={movie['title'].replace(' ', '+')}",
-                         use_column_width=True)
-            with col2:
-                st.subheader(movie['title'])
-                st.write(f"**Year:** {movie['year']}")
-                st.write(f"**Genres:** {', '.join([g['name'] for g in movie['genres']])}")
-                st.write(f"**Rating:** {movie['weighted_rating']:.2f}")
+        display_movie(movie)
 
 
 def show_content_based(recommender):
@@ -207,16 +239,7 @@ def show_content_based(recommender):
         recommendations = recommender.content_based_recommendations(movie_title, n_recommendations)
 
         for _, movie in recommendations.iterrows():
-            with st.container():
-                col1, col2 = st.columns([1, 3])
-                with col1:
-                    st.image(f"https://via.placeholder.com/150x225.png?text={movie['title'].replace(' ', '+')}",
-                             use_column_width=True)
-                with col2:
-                    st.subheader(movie['title'])
-                    st.write(f"**Year:** {movie['year']}")
-                    st.write(f"**Genres:** {', '.join([g['name'] for g in movie['genres']])}")
-                    st.write(f"**Overview:** {movie['overview'][:200]}...")
+            display_movie(movie)
 
 
 def show_collaborative_filtering(recommender):
@@ -228,16 +251,7 @@ def show_collaborative_filtering(recommender):
         recommendations = recommender.collaborative_filtering_recommendations(user_id, n_recommendations)
 
         for _, movie in recommendations.iterrows():
-            with st.container():
-                col1, col2 = st.columns([1, 3])
-                with col1:
-                    st.image(f"https://via.placeholder.com/150x225.png?text={movie['title'].replace(' ', '+')}",
-                             use_column_width=True)
-                with col2:
-                    st.subheader(movie['title'])
-                    st.write(f"**Year:** {movie['year']}")
-                    st.write(f"**Genres:** {', '.join([g['name'] for g in movie['genres']])}")
-                    st.write(f"**Overview:** {movie['overview'][:200]}...")
+            display_movie(movie)
 
 
 if __name__ == '__main__':
