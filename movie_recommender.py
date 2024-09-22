@@ -159,6 +159,10 @@ def main():
         st.session_state.genre = None
     if 'trigger_popular_movies' not in st.session_state:
         st.session_state.trigger_popular_movies = False
+    if 'recommendation_page' not in st.session_state:
+        st.session_state.recommendation_page = 0
+    if 'current_recommendations' not in st.session_state:
+        st.session_state.current_recommendations = None
 
     # Hamburger menu
     with st.expander("☰ Menu"):
@@ -169,6 +173,8 @@ def main():
                 if page != "Popular Movies":
                     st.session_state.genre = None
                     st.session_state.trigger_popular_movies = False
+                st.session_state.recommendation_page = 0
+                st.session_state.current_recommendations = None
                 st.rerun()
 
     st.title('🎬 Movie Recommendation System')
@@ -196,6 +202,8 @@ def show_home_page(recommender):
         if cols[i % 5].button(genre, key=f"genre_{genre}"):
             st.session_state.genre = genre
             st.session_state.trigger_popular_movies = True
+            st.session_state.recommendation_page = 0
+            st.session_state.current_recommendations = None
             st.rerun()
 
 
@@ -214,20 +222,42 @@ def display_movie(movie):
 def show_popular_movies(recommender):
     st.header('Popular Movies')
 
-    genre = st.selectbox('Select a genre', ['All'] + recommender.genres,
-                         index=0 if st.session_state.genre is None else recommender.genres.index(
-                             st.session_state.genre) + 1,
+    genres = ['All'] + recommender.genres
+    if st.session_state.genre is None or st.session_state.genre not in genres:
+        selected_index = 0
+    else:
+        selected_index = genres.index(st.session_state.genre)
+
+    genre = st.selectbox('Select a genre', genres,
+                         index=selected_index,
                          key="genre_selectbox")
 
     if genre != st.session_state.genre:
         st.session_state.genre = genre
+        st.session_state.recommendation_page = 0
+        st.session_state.current_recommendations = None
 
     n_movies = st.number_input('Number of movies to show', min_value=1, max_value=20, value=10)
 
-    popular_movies = recommender.popularity_based_recommendations(n_movies, genre if genre != 'All' else None)
+    if st.session_state.current_recommendations is None:
+        st.session_state.current_recommendations = recommender.popularity_based_recommendations(100,
+                                                                                                genre if genre != 'All' else None)
 
-    for _, movie in popular_movies.iterrows():
+    start_index = st.session_state.recommendation_page * n_movies
+    end_index = start_index + n_movies
+
+    for _, movie in st.session_state.current_recommendations.iloc[start_index:end_index].iterrows():
         display_movie(movie)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button('Previous', disabled=(st.session_state.recommendation_page == 0)):
+            st.session_state.recommendation_page -= 1
+            st.rerun()
+    with col2:
+        if st.button('Next', disabled=(end_index >= len(st.session_state.current_recommendations))):
+            st.session_state.recommendation_page += 1
+            st.rerun()
 
 
 def show_content_based(recommender):
@@ -235,11 +265,25 @@ def show_content_based(recommender):
     movie_title = st.selectbox('Select a movie', recommender.movies['title'].unique())
     n_recommendations = st.slider('Number of recommendations', 1, 10, 3)
 
-    if st.button('Get Recommendations'):
-        recommendations = recommender.content_based_recommendations(movie_title, n_recommendations)
+    if st.button('Get Recommendations') or st.session_state.current_recommendations is not None:
+        if st.session_state.current_recommendations is None:
+            st.session_state.current_recommendations = recommender.content_based_recommendations(movie_title, 100)
 
-        for _, movie in recommendations.iterrows():
+        start_index = st.session_state.recommendation_page * n_recommendations
+        end_index = start_index + n_recommendations
+
+        for _, movie in st.session_state.current_recommendations.iloc[start_index:end_index].iterrows():
             display_movie(movie)
+
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button('Previous', disabled=(st.session_state.recommendation_page == 0)):
+                st.session_state.recommendation_page -= 1
+                st.rerun()
+        with col2:
+            if st.button('Next', disabled=(end_index >= len(st.session_state.current_recommendations))):
+                st.session_state.recommendation_page += 1
+                st.rerun()
 
 
 def show_collaborative_filtering(recommender):
@@ -247,11 +291,25 @@ def show_collaborative_filtering(recommender):
     user_id = st.number_input('Enter User ID', min_value=1, max_value=610, value=1)
     n_recommendations = st.slider('Number of recommendations', 1, 10, 3)
 
-    if st.button('Get Recommendations'):
-        recommendations = recommender.collaborative_filtering_recommendations(user_id, n_recommendations)
+    if st.button('Get Recommendations') or st.session_state.current_recommendations is not None:
+        if st.session_state.current_recommendations is None:
+            st.session_state.current_recommendations = recommender.collaborative_filtering_recommendations(user_id, 100)
 
-        for _, movie in recommendations.iterrows():
+        start_index = st.session_state.recommendation_page * n_recommendations
+        end_index = start_index + n_recommendations
+
+        for _, movie in st.session_state.current_recommendations.iloc[start_index:end_index].iterrows():
             display_movie(movie)
+
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button('Previous', disabled=(st.session_state.recommendation_page == 0)):
+                st.session_state.recommendation_page -= 1
+                st.rerun()
+        with col2:
+            if st.button('Next', disabled=(end_index >= len(st.session_state.current_recommendations))):
+                st.session_state.recommendation_page += 1
+                st.rerun()
 
 
 if __name__ == '__main__':
