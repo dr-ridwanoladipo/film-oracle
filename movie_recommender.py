@@ -143,7 +143,7 @@ def show_popular_movies(recommender):
     genre = st.selectbox('Select a genre', ['All'] + recommender.genres,
                          index=0 if st.session_state.genre is None else recommender.genres.index(
                              st.session_state.genre) + 1)
-    n_movies = st.number_input('Number of movies to show', min_value=1, max_value=20, value=10)
+    n_movies = st.number_input('Number of movies to show', min_value=1, max_value=20, value=5)
 
     popular_movies = recommender.popularity_based_recommendations(n_movies, genre)
 
@@ -158,6 +158,7 @@ def show_popular_movies(recommender):
                 st.write(f"**Year:** {movie['year']}")
                 st.write(f"**Genres:** {', '.join([g['name'] for g in movie['genres']])}")
                 st.write(f"**Rating:** {movie['weighted_rating']:.2f}")
+                st.markdown("<br>", unsafe_allow_html=True)
 
 
 def show_content_based(recommender):
